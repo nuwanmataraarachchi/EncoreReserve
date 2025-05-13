@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.concertticketsystem.proto";
+option java_outer_classname = "ConcertServiceProto";
+
+service ConcertService {
+    rpc AddConcert (AddConcertRequest) returns (AddConcertResponse);
+    rpc UpdateConcert (UpdateConcertRequest) returns (UpdateConcertResponse);
+    rpc CancelConcert (CancelConcertRequest) returns (CancelConcertResponse);
+    rpc MakeReservation (ReservationRequest) returns (ReservationResponse);
+    rpc UpdateTicketStock (UpdateStockRequest) returns (UpdateStockResponse);
+}
+
+message AddConcertRequest {
+    string concert_id = 1;
+    string name = 2;
+    string date = 3;
+    repeated SeatTier seats = 4;
+    int32 after_party_tickets = 5;
+}
+
+message AddConcertResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message UpdateConcertRequest {
+    string concert_id = 1;
+    repeated SeatTier seats = 2;
+    int32 after_party_tickets = 3;
+}
+
+message UpdateConcertResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message CancelConcertRequest {
+    string concert_id = 1;
+}
+
+message CancelConcertResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ReservationRequest {
+    string concert_id = 1;
+    string seat_type = 2;
+    string customer_id = 3;
+    bool include_after_party = 4;
+}
+
+message ReservationResponse {
+    bool success = 1;
+    string reservation_id = 2;
+    string message = 3;
+}
+
+message UpdateStockRequest {
+    string concert_id = 1;
+    repeated SeatTier seats = 2;
+    int32 after_party_tickets = 3;
+}
+
+message UpdateStockResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message SeatTier {
+    string type = 1; // e.g., "Regular", "VIP"
+    int32 count = 2;
+    double price = 3;
+}
