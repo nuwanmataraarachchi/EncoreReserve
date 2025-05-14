@@ -1,0 +1,7 @@
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/logging/log4j/LogManager
+	at org.concertticketsystem.Main.<clinit>(Main.java:7)
+Caused by: java.lang.ClassNotFoundException: org.apache.logging.log4j.LogManager
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:581)
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:178)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:527)
+	... 1 more

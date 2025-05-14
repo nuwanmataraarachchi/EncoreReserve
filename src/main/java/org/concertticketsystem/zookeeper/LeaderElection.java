@@ -1,70 +1,61 @@
 package org.concertticketsystem.zookeeper;
 
+import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.*;
-import org.concertticketsystem.Constants;
-import org.concertticketsystem.Config;
-import org.concertticketsystem.Node;
+import org.concertticketsystem.NodeServer;
 
 import java.io.IOException;
 
-public class LeaderElection {
+public class LeaderElection implements Watcher {
     private static final Logger logger = LogManager.getLogger(LeaderElection.class);
-    private final Node node;
-    private ZooKeeper zooKeeper;
-    private String nodePath;
-    private boolean isLeader;
+    private final ZooKeeper zooKeeper;
+    private final String electionPath = "/election";
+    private final NodeServer node;
+    private String znodePath;
 
-    public LeaderElection(Node node) {
+    public LeaderElection(ZooKeeper zooKeeper, NodeServer node) throws IOException, KeeperException, InterruptedException {
+        this.zooKeeper = zooKeeper;
         this.node = node;
-        this.isLeader = false;
+        if (zooKeeper.exists(electionPath, false) == null) {
+            zooKeeper.create(electionPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        participate();
     }
 
-    public void start() throws IOException, KeeperException, InterruptedException {
-        zooKeeper = new ZooKeeper(Config.getInstance().getZooKeeperConnectString(),
-                Constants.ZK_SESSION_TIMEOUT, event -> {});
-
-        // Ensure root path exists
-        if (zooKeeper.exists(Constants.ZK_ROOT_PATH, false) == null) {
-            zooKeeper.create(Constants.ZK_ROOT_PATH, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }
-        if (zooKeeper.exists(Constants.ZK_NODES_PATH, false) == null) {
-            zooKeeper.create(Constants.ZK_NODES_PATH, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }
-
-        // Register node
-        nodePath = zooKeeper.create(Constants.ZK_NODES_PATH + "/" + node.getNodeId(),
-                node.getNodeId().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-
-        // Elect leader
-        electLeader();
+    private void participate() throws KeeperException, InterruptedException {
+        znodePath = zooKeeper.create(
+                electionPath + "/n_",
+                node.getNodeId().getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.EPHEMERAL_SEQUENTIAL
+        );
+        logger.info("Node {} created znode: {}", node.getNodeId(), znodePath);
+        checkLeadership();
     }
 
-    public void stop() {
-        try {
-            if (zooKeeper != null) {
-                zooKeeper.close();
+    private void checkLeadership() throws KeeperException, InterruptedException {
+        java.util.List<String> children = zooKeeper.getChildren(electionPath, this);
+        children.sort(String::compareTo);
+        String smallest = children.get(0);
+        if (znodePath.endsWith(smallest)) {
+            logger.info("Node {} is the leader", node.getNodeId());
+        } else {
+            String watchedZnode = electionPath + "/" + children.get(children.indexOf(znodePath.substring(electionPath.length() + 1)) - 1);
+            zooKeeper.exists(watchedZnode, this);
+            logger.info("Node {} watching znode: {}", node.getNodeId(), watchedZnode);
+        }
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+        if (event.getType() == Event.EventType.NodeDeleted) {
+            try {
+                checkLeadership();
+            } catch (Exception e) {
+                logger.error("Error in leader election", e);
             }
-        } catch (InterruptedException e) {
-            logger.error("Error closing ZooKeeper", e);
-        }
-    }
-
-    public boolean isLeader() {
-        return isLeader;
-    }
-
-    private void electLeader() throws KeeperException, InterruptedException {
-        // Simplified leader election: first node becomes leader
-        String leaderPath = Constants.ZK_LEADER_PATH;
-        try {
-            zooKeeper.create(leaderPath, node.getNodeId().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            isLeader = true;
-            logger.info("Node {} elected as leader", node.getNodeId());
-        } catch (KeeperException.NodeExistsException e) {
-            isLeader = false;
-            logger.info("Node {} is follower", node.getNodeId());
         }
     }
 }

@@ -8,31 +8,40 @@ service ConcertService {
     rpc AddConcert (AddConcertRequest) returns (AddConcertResponse);
     rpc UpdateConcert (UpdateConcertRequest) returns (UpdateConcertResponse);
     rpc CancelConcert (CancelConcertRequest) returns (CancelConcertResponse);
-    rpc MakeReservation (ReservationRequest) returns (ReservationResponse);
-    rpc UpdateTicketStock (UpdateStockRequest) returns (UpdateStockResponse);
+    rpc ReserveSeats (ReservationRequest) returns (ReservationResponse);
+    rpc UpdateStock (UpdateStockRequest) returns (UpdateStockResponse);
+    rpc ListConcerts (ListConcertsRequest) returns (ListConcertsResponse);
 }
 
 message AddConcertRequest {
     string concert_id = 1;
     string name = 2;
     string date = 3;
-    repeated SeatTier seats = 4;
+    repeated SeatTier seat_tiers = 4;
     int32 after_party_tickets = 5;
 }
 
+message SeatTier {
+    string type = 1; // e.g., "Regular", "VIP"
+    int32 total_seats = 2;
+    double price = 3;
+}
+
 message AddConcertResponse {
-    bool success = 1;
+    string concert_id = 1;
     string message = 2;
 }
 
 message UpdateConcertRequest {
     string concert_id = 1;
-    repeated SeatTier seats = 2;
-    int32 after_party_tickets = 3;
+    string name = 2;
+    string date = 3;
+    repeated SeatTier seat_tiers = 4;
+    int32 after_party_tickets = 5;
 }
 
 message UpdateConcertResponse {
-    bool success = 1;
+    string concert_id = 1;
     string message = 2;
 }
 
@@ -41,36 +50,50 @@ message CancelConcertRequest {
 }
 
 message CancelConcertResponse {
-    bool success = 1;
+    string concert_id = 1;
     string message = 2;
 }
 
 message ReservationRequest {
     string concert_id = 1;
-    string seat_type = 2;
-    string customer_id = 3;
+    string user_id = 2;
+    repeated SeatReservation seats = 3;
     bool include_after_party = 4;
+    int32 after_party_count = 5;
+}
+
+message SeatReservation {
+    string seat_type = 1;
+    int32 count = 2;
 }
 
 message ReservationResponse {
-    bool success = 1;
-    string reservation_id = 2;
+    string reservation_id = 1;
+    string concert_id = 2;
     string message = 3;
 }
 
 message UpdateStockRequest {
     string concert_id = 1;
-    repeated SeatTier seats = 2;
+    repeated SeatTier seat_tiers = 2;
     int32 after_party_tickets = 3;
 }
 
 message UpdateStockResponse {
-    bool success = 1;
+    string concert_id = 1;
     string message = 2;
 }
 
-message SeatTier {
-    string type = 1; // e.g., "Regular", "VIP"
-    int32 count = 2;
-    double price = 3;
+message ListConcertsRequest {}
+
+message ListConcertsResponse {
+    repeated Concert concerts = 1;
+}
+
+message Concert {
+    string concert_id = 1;
+    string name = 2;
+    string date = 3;
+    repeated SeatTier seat_tiers = 4;
+    int32 after_party_tickets = 5;
 }

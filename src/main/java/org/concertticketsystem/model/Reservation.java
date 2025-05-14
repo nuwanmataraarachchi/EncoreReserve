@@ -1,39 +1,22 @@
 package org.concertticketsystem.model;
 
-import java.util.UUID;
+import java.util.List;
 
 public class Reservation {
-    private final String id;
-    private final String concertId;
-    private final String seatType;
-    private final String customerId;
-    private final boolean includeAfterParty;
+    private String id;
+    private String concertId;
+    private List<SeatReservation> seatReservations;
 
-    public Reservation(String concertId, String seatType, String customerId, boolean includeAfterParty) {
-        this.id = UUID.randomUUID().toString();
+    public Reservation(String id, String concertId, List<SeatReservation> seatReservations) {
+        this.id = id;
         this.concertId = concertId;
-        this.seatType = seatType;
-        this.customerId = customerId;
-        this.includeAfterParty = includeAfterParty;
+        this.seatReservations = seatReservations;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getConcertId() {
-        return concertId;
-    }
-
-    public String getSeatType() {
-        return seatType;
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public boolean isIncludeAfterParty() {
-        return includeAfterParty;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getConcertId() { return concertId; }
+    public void setConcertId(String concertId) { this.concertId = concertId; }
+    public List<SeatReservation> getSeatReservations() { return seatReservations; }
+    public void setSeatReservations(List<SeatReservation> seatReservations) { this.seatReservations = seatReservations; }
 }
